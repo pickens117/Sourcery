@@ -531,9 +531,6 @@ extension Sourcery {
     private func output(result: String, to outputPath: Path) throws {
         var result = result
         if !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            if outputPath.extension == "swift" {
-                result = Sourcery.generationHeader + result
-            }
             if !outputPath.parent().exists {
                 try outputPath.parent().mkpath()
             }

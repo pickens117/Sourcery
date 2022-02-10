@@ -23,7 +23,7 @@ public enum ParserEngine {
 
 public var parserEngine: ParserEngine = .swiftSyntax
 
-public func makeParser(for contents: String, forceParse: [String] = [], parseDocumentation: Bool = false, path: Path? = nil, module: String? = nil) throws -> FileParserType {
+public func makeParser(for contents: String, forceParse: [String] = [], parseDocumentation: Bool, path: Path? = nil, module: String? = nil) throws -> FileParserType {
     switch parserEngine {
     case .swiftSyntax:
         return try FileParserSyntax(contents: contents, forceParse: forceParse, parseDocumentation: parseDocumentation, path: path, module: module)

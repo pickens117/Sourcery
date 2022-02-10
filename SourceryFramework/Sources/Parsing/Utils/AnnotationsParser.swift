@@ -43,7 +43,7 @@ public struct AnnotationsParser {
     /// Initializes parser
     ///
     /// - Parameter contents: Contents to parse
-    init(contents: String, parseDocumentation: Bool = false, sourceLocationConverter: SourceLocationConverter? = nil) {
+    init(contents: String, parseDocumentation: Bool, sourceLocationConverter: SourceLocationConverter? = nil) {
         self.parseDocumentation = parseDocumentation
         self.lines = AnnotationsParser.parse(contents: contents)
         self.sourceLocationConverter = sourceLocationConverter
@@ -76,9 +76,6 @@ public struct AnnotationsParser {
     }
 
     func documentation(from node: IdentifierSyntax) -> Documentation {
-        guard parseDocumentation else {
-            return  []
-        }
         return documentationFrom(
           location: findLocation(syntax: node.identifier),
           precedingComments: node.leadingTrivia?.compactMap({ $0.comment }) ?? []
@@ -86,9 +83,6 @@ public struct AnnotationsParser {
     }
 
     func documentation(fromToken token: SyntaxProtocol) -> Documentation {
-        guard parseDocumentation else {
-            return  []
-        }
         return documentationFrom(
           location: findLocation(syntax: token),
           precedingComments: token.leadingTrivia?.compactMap({ $0.comment }) ?? []
@@ -126,23 +120,32 @@ public struct AnnotationsParser {
     }
 
     private func documentationFrom(location: SwiftSyntax.SourceLocation, precedingComments: [String]) -> Documentation {
-        guard parseDocumentation,
-            let lineNumber = location.line, let column = location.column else {
+        Log.verbose("Parsing Documentation called")
+        guard let lineNumber = location.line, let _ = location.column else {
             return []
         }
-
-        // Inline documentation not currently supported
-        _ = column
-
-        // var stop = false
-        // var documentation = inlineDocumentationFrom(line: (lineNumber, column), stop: &stop)
-        // guard !stop else { return annotations }
+        Log.verbose("Parsing Documentation running")
 
         var documentation: Documentation = []
 
         for line in lines[0..<lineNumber-1].reversed() {
-            if line.type == .documentationComment {
-                documentation.append(line.content.trimmingCharacters(in: .whitespaces).trimmingPrefix("///").trimmingPrefix("/**").trimmingPrefix(" "))
+            Log.verbose("Parsing Documentation line: \(line.content)")
+            if line.type == .documentationComment || line.type == .comment {
+                //TODO: pass in an array of what to trim
+                let doc = line.content
+                    .trimmingCharacters(in: .whitespaces)
+                    .trimmingPrefix("///")
+                    .trimmingPrefix("/**")
+                    .trimmingPrefix("*/")
+                    .trimmingPrefix("* --")
+                    .trimmingPrefix("* @desc")
+                    .trimmingPrefix("*")
+                    .trimmingPrefix(" ")
+                Log.verbose("Documentation appended: \(doc)")
+                
+                if !doc.isEmpty {
+                    documentation.append(doc)
+                }
             }
             if line.type != .comment && line.type != .documentationComment {
                 break
